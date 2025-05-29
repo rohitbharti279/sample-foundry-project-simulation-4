@@ -1,92 +1,87 @@
 import { ethers } from "hardhat";
+import * as fs from 'fs';
 
-// Import contract artifacts
-import CounterArtifact from "../../../sample-foundry-project/out/Counter.sol/Counter.json";
-import MyTokenArtifact from "../../../sample-foundry-project/out/MyToken.sol/MyToken.json";
+// Define contract artifact paths from the provided mapping
+const artifactPaths: { [contractName: string]: string } = {
+  "Counter": "../../../sample-foundry-project/out/Counter.sol/Counter.json",
+  "MyToken": "../../../sample-foundry-project/out/MyToken.sol/MyToken.json"
+};
 
-async function deployContracts(): Promise<{ [key: string]: ethers.Contract }> {
-  // Get the deployer account
+// Define the deployment sequence
+const deploymentSequence = {
+  "sequence": [
+    {
+      "type": "deploy",
+      "contract": "MyToken",
+      "constructor": "constructor(uint256 initialSupply) ERC20(\"MyToken\", \"MTK\") {\n        _mint(msg.sender, initialSupply);\n    }",
+      "function": "constructor",
+      "ref_name": "myToken",
+      "params": [
+        {
+          "name": "initialSupply",
+          "value": "1000000000000000000000",
+          "type": "val"
+        }
+      ]
+    },
+    {
+      "type": "deploy",
+      "contract": "Counter",
+      "constructor": "null",
+      "function": "constructor",
+      "ref_name": "counter",
+      "params": []
+    }
+  ]
+};
+
+
+async function deployContracts() {
   const [deployer] = await ethers.getSigners();
 
   console.log("Deploying contracts with the account:", deployer.address);
 
-  const deploymentSequence = [
-    {
-      type: "deploy",
-      contract: "MyToken",
-      function: "constructor",
-      ref_name: "myToken",
-      params: [{
-        name: "initialSupply",
-        value: "1000000000000000000000",
-        type: "val"
-      }]
-    },
-    {
-      type: "deploy",
-      contract: "Counter",
-      function: "constructor",
-      ref_name: "counter",
-      params: []
+  const balance = await ethers.provider.getBalance(deployer.address);
+  console.log("Account balance:", balance.toString());
+
+  const deployedContracts: { [refName: string]: any } = {};
+
+  // Function to deploy a contract with its artifact
+  async function deployContract(contractName: string, artifactPath: string, constructorArgs: any[] = []) {
+    console.log(`Deploying ${contractName} from artifact: ${artifactPath}`);
+
+    try {
+      // Dynamically import the artifact
+      const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf-8'));
+      const ContractFactory = await ethers.getContractFactory(artifact.abi, artifact.bytecode, deployer);
+
+      const contract = await ContractFactory.deploy(...constructorArgs);
+      await contract.waitForDeployment();
+
+      console.log(`${contractName} deployed to:`, contract.target);
+      return contract;
+    } catch (error) {
+      console.error(`Error deploying ${contractName}:`, error);
+      throw error; // Re-throw the error to halt the deployment
     }
-  ];
+  }
 
-  const deployedContracts: { [key: string]: ethers.Contract } = {};
-
-  for (const step of deploymentSequence) {
+  // Iterate through the deployment sequence
+  for (const step of deploymentSequence.sequence) {
     if (step.type === "deploy") {
-      console.log(`Deploying ${step.contract} as ${step.ref_name}...`);
-      let contractFactory;
-
-      if (step.contract === "MyToken") {
-        contractFactory = new ethers.ContractFactory(
-          MyTokenArtifact.abi,
-          MyTokenArtifact.bytecode,
-          deployer
-        );
-      } else if (step.contract === "Counter") {
-        contractFactory = new ethers.ContractFactory(
-          CounterArtifact.abi,
-          CounterArtifact.bytecode,
-          deployer
-        );
-      } else {
-        console.error(`Unknown contract: ${step.contract}. Skipping deployment.`);
-        continue;
+      const artifactPath = artifactPaths[step.contract];
+      if (!artifactPath) {
+        throw new Error(`Artifact path not found for contract: ${step.contract}`);
       }
 
-      let deploymentParams: any[] = [];
-      if (step.params && step.params.length > 0) {
-        deploymentParams = step.params.map((param) => {
-          if (param.type === "val") {
-            return param.value;
-          } else {
-            console.error(`Unknown param type: ${param.type} for param ${param.name}. Skipping.`);
-            return undefined;
-          }
-        }).filter(param => param !== undefined);
-      }
+      const constructorArgs = step.params.map(param => param.value);
 
-      try {
-        const contract = await contractFactory.deploy(...deploymentParams);
-        await contract.waitForDeployment();
-
-        console.log(`${step.contract} deployed to:`, contract.target);
-        deployedContracts[step.ref_name] = contract;
-
-        // Verify deployment (optional)
-        const code = await ethers.provider.getCode(contract.target);
-        if (code === '0x') {
-          console.error(`Contract ${step.contract} deployment verification failed. No code at address.`);
-        }
-
-      } catch (error: any) {
-        console.error(`Error deploying ${step.contract}:`, error.message);
-      }
+      const contract = await deployContract(step.contract, artifactPath, constructorArgs);
+      deployedContracts[step.ref_name] = contract;
     }
   }
 
   return deployedContracts;
 }
 
-export default deployContracts;
+export { deployContracts };

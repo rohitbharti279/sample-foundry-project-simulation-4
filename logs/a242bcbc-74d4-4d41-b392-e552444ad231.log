@@ -1,0 +1,10 @@
+/private/tmp/workspaces/s4/sample-foundry-project-simulation-4/node_modules/ts-node/dist/index.js:851
+            return old(m, filename);
+                   ^
+Error [ERR_REQUIRE_ESM]: require() of ES Module /private/tmp/workspaces/s4/sample-foundry-project-simulation-4/node_modules/@svylabs/ilumina/dist/src/index.js from /private/tmp/workspaces/s4/sample-foundry-project-simulation-4/simulation/run.ts not supported.
+Instead change the require of index.js in /private/tmp/workspaces/s4/sample-foundry-project-simulation-4/simulation/run.ts to a dynamic import() which is available in all CommonJS modules.
+    at require.extensions.<computed> [as .js] (/private/tmp/workspaces/s4/sample-foundry-project-simulation-4/node_modules/ts-node/dist/index.js:851:20)
+    at Object.<anonymous> (/private/tmp/workspaces/s4/sample-foundry-project-simulation-4/simulation/run.ts:37:19)
+    at m._compile (/private/tmp/workspaces/s4/sample-foundry-project-simulation-4/node_modules/ts-node/dist/index.js:857:29) {
+  code: 'ERR_REQUIRE_ESM'
+}
