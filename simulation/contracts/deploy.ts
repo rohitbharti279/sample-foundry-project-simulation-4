@@ -1,46 +1,37 @@
-const hre = require("hardhat");
+import { ethers } from "hardhat";
+import * as CounterJson from "../../../sample-foundry-project/out/Counter.sol/Counter.json";
+import * as MyTokenJson from "../../../sample-foundry-project/out/MyToken.sol/MyToken.json";
 
 async function deployContracts() {
-  const artifactPaths = {
-    "Counter": "../../../sample-foundry-project/out/Counter.sol/Counter.json",
-    "MyToken": "../../../sample-foundry-project/out/MyToken.sol/MyToken.json"
-  };
-
-  const CounterArtifact = require(artifactPaths.Counter);
-  const MyTokenArtifact = require(artifactPaths.MyToken);
-
-  const [deployer] = await hre.ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
 
   console.log("Deploying contracts with the account:", deployer.address);
 
-  const contracts = {};
+  const balance = await ethers.provider.getBalance(deployer.address);
+  console.log("Account balance:", balance.toString());
 
-  // Deploy MyToken
-  const initialSupply = "1000000000000000000000";
-  const MyToken = new hre.ethers.ContractFactory(
-    MyTokenArtifact.abi,
-    MyTokenArtifact.bytecode,
+  const myTokenFactory = new ethers.ContractFactory(
+    MyTokenJson.abi,
+    MyTokenJson.bytecode,
     deployer
   );
-  const myToken = await MyToken.deploy(initialSupply);
-  await myToken.waitForDeployment();
-  contracts.myToken = myToken;
+  const myToken = await myTokenFactory
+    .deploy("1000000000000000000000")
+    .then((f) => f.waitForDeployment());
+  console.log("MyToken address:", myToken.target);
 
-  console.log("MyToken deployed to:", myToken.target);
-
-  // Deploy Counter
-  const Counter = new hre.ethers.ContractFactory(
-    CounterArtifact.abi,
-    CounterArtifact.bytecode,
+  const counterFactory = new ethers.ContractFactory(
+    CounterJson.abi,
+    CounterJson.bytecode,
     deployer
   );
-  const counter = await Counter.deploy();
-  await counter.waitForDeployment();
-  contracts.counter = counter;
+  const counter = await counterFactory.deploy().then((f) => f.waitForDeployment());
+  console.log("Counter address:", counter.target);
 
-  console.log("Counter deployed to:", counter.target);
-
-  return contracts;
+  return {
+    MyToken: myToken,
+    Counter: counter,
+  };
 }
 
-exports.deployContracts = deployContracts;
+export { deployContracts };
