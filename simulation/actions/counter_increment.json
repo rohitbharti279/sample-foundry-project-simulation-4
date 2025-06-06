@@ -1,0 +1,69 @@
+{
+  "action": {
+    "name": "Increment the Number",
+    "summary": "Increments the current number stored in the Counter contract.",
+    "contract_name": "Counter",
+    "function_name": "increment",
+    "probability": 0.7
+  },
+  "action_detail": {
+    "action_name": "Increment the Number",
+    "contract_name": "Counter",
+    "function_name": "increment",
+    "pre_execution_parameter_generation_rules": [
+      "No on-chain parameters are required for the `increment` function."
+    ],
+    "on_execution_state_updates_made": [
+      {
+        "category": "Number Update",
+        "state_update_descriptions": [
+          "The `number` variable in the `Counter` contract is incremented by 1."
+        ]
+      }
+    ],
+    "post_execution_contract_state_validation_rules": [
+      {
+        "category": "Number Update",
+        "rule_descriptions": [
+          "The value of `number` after execution (obtained via the `number()` function) should be one greater than its value before execution."
+        ]
+      }
+    ]
+  },
+  "action_execution": {
+    "action_name": "Increment the Number",
+    "contract_name": "Counter",
+    "function_name": "increment",
+    "does_register_new_identifier": false,
+    "new_identifiers": [],
+    "all_state_updates": [
+      {
+        "contract_name": "Counter",
+        "state_updated": [
+          {
+            "state_variable_name": "number",
+            "type": "uint256",
+            "what_does_it_track": "Tracks the current number stored in the Counter contract.",
+            "why_is_is_important": "It's important to track the number for whatever purpose the counter is used for.",
+            "when_is_it_updated": "The `number` state variable is updated every time the `increment()` function is called.",
+            "how_to_validate_state_update": "Read the value of the `number` state variable using the `number()` view function after calling `increment()` and check if it has increased by one.",
+            "has_conditional_updates": false,
+            "summary_of_update": "Increments the `number` state variable by one.",
+            "conditions": []
+          }
+        ]
+      }
+    ]
+  },
+  "action_context": {
+    "contract_context": [
+      {
+        "contract_name": "Counter",
+        "code_snippet": "function increment() public {\n        number++;\n    }",
+        "references": {
+          "references": []
+        }
+      }
+    ]
+  }
+}
