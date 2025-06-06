@@ -1,0 +1,14 @@
+{
+  "attributes": [
+    {
+      "name": "Number",
+      "type": "uint256",
+      "contract_function": "number",
+      "parameters": []
+    }
+  ],
+  "typescript_interfaces": {
+    "contract_snapshot_interface_code": "interface CounterSnapshot {\n  number: bigint;\n}",
+    "interface_name": "CounterSnapshot"
+  }
+}
